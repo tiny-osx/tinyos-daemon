@@ -1,10 +1,11 @@
-
+using System.Runtime.Versioning;
 using TinyOS.Daemon.Endpoints;
 
 namespace TinyOS.Daemon;
 
 internal class Program
 {
+    [UnsupportedOSPlatform("windows")]
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateSlimBuilder(

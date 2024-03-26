@@ -24,7 +24,6 @@ public class DebuggerService
             StartInfo = new ProcessStartInfo
             {
                 FileName = _configuration["debugger:filename"] ?? "/usr/share/vsdbg/vsdbg",
-                WorkingDirectory = "/apps/313aee0b-57b3-466a-2d5a-f52b63bd654b",
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardInput = true,
@@ -36,8 +35,7 @@ public class DebuggerService
 
     public IPEndPoint Start(string[] args)
     {        
-        _cancellationSource.TryReset();
-
+        _cancellationSource.TryReset();        
         if (args.Count() == 0)
         {
             _process.StartInfo.Arguments = _configuration["debugger:arguments"] ?? "--interpreter=vscode";

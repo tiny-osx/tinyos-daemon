@@ -85,7 +85,7 @@ internal partial class Endpoints
             {
                 return Results.BadRequest();
             }
-
+            
             var filePath = Path.Combine(app.Environment.ContentRootPath, applicationId.ToString(), file.FileName);
             var directoryPath = Path.GetDirectoryName(filePath);
             if (directoryPath is null)
@@ -125,18 +125,28 @@ internal partial class Endpoints
                     }
                 }
 
-                if (file.FileName == "TinyOS.VScode")
+                if (parameters.TryGetValue("assemblyname", out string? assemblyName)
+                     || !string.IsNullOrEmpty(assemblyName))
                 {
-                    File.SetUnixFileMode(
-                        filePath, // 0755
-                        UnixFileMode.UserRead
-                        | UnixFileMode.UserWrite
-                        | UnixFileMode.UserExecute
-                        | UnixFileMode.GroupRead
-                        | UnixFileMode.GroupExecute
-                        | UnixFileMode.OtherRead
-                        | UnixFileMode.OtherExecute
-                    );
+                    if (file.FileName == assemblyName)
+                    {
+                        File.SetUnixFileMode(
+                            filePath, // 0755
+                            UnixFileMode.UserRead
+                            | UnixFileMode.UserWrite
+                            | UnixFileMode.UserExecute
+                            | UnixFileMode.GroupRead
+                            | UnixFileMode.GroupExecute
+                            | UnixFileMode.OtherRead
+                            | UnixFileMode.OtherExecute
+                        );
+
+                        var path =  Path.Combine(app.Environment.ContentRootPath, file.FileName);
+                        if (!File.Exists(path))
+                        {
+                            File.CreateSymbolicLink(path, filePath);
+                        }
+                    }
                 }
             }
 
