@@ -1,9 +1,19 @@
-﻿using System.Security.Cryptography;
+﻿using System.IO;
+using System.Security.Cryptography;
+
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Versioning;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Win32.SafeHandles;
 
 using Microsoft.Extensions.Primitives;
 
 namespace TinyOS.Daemon.Endpoints;
 
+[UnsupportedOSPlatform("windows")]
 internal partial class Endpoints
 {
     internal static void MapApps(WebApplication app)
@@ -37,10 +47,10 @@ internal partial class Endpoints
             }
         });
 
-        app.MapGet("/apps/{applicationId:guid}/file/{remotePath}", (Guid applicationId, string remotePath) =>
+        app.MapGet("/apps/delete/{applicationId:guid}/file/{remotePath}", (Guid applicationId, string remotePath) =>
         {
             var path = Path.Combine(app.Environment.ContentRootPath, applicationId.ToString(), remotePath);
-            Directory.Delete(path);
+            File.Delete(path);
         });
 
         app.MapGet("/apps/download/{applicationId:guid}", (Guid applicationId) =>
@@ -55,7 +65,7 @@ internal partial class Endpoints
             return Results.NotFound();
         });
 
-        app.MapPost("/apps/upload/{applicationId:guid}", async (Guid applicationId, HttpRequest request) =>
+        _ = app.MapPost("/apps/upload/{applicationId:guid}", async (Guid applicationId, HttpRequest request) =>
         {
             if (!request.HasFormContentType)
             {
@@ -114,10 +124,24 @@ internal partial class Endpoints
                         }
                     }
                 }
+
+                if (file.FileName == "TinyOS.VScode")
+                {
+                    File.SetUnixFileMode(
+                        filePath, // 0755
+                        UnixFileMode.UserRead
+                        | UnixFileMode.UserWrite
+                        | UnixFileMode.UserExecute
+                        | UnixFileMode.GroupRead
+                        | UnixFileMode.GroupExecute
+                        | UnixFileMode.OtherRead
+                        | UnixFileMode.OtherExecute
+                    );
+                }
             }
 
             return Results.Ok();
 
-        }).Accepts<IFormFile>("multipart/form-data");
+        }).Accepts<IFormFile>("multipart/form-data");   
     }
 }
