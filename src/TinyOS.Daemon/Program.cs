@@ -23,6 +23,7 @@ internal class Program
         });
         
         builder.Services.AddScoped<DebuggerService>();
+        builder.Services.AddHostedService<DiscoveryService>();
 
         var app = builder.Build();
         
