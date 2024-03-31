@@ -10,16 +10,16 @@ namespace TinyOS.Daemon;
 
 public class DiscoveryService : BackgroundService
 {
+    private readonly UdpClient _udpListener;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DiscoveryService> _logger;
-    private readonly UdpClient _listener;
 
     public DiscoveryService(ILogger<DiscoveryService> logger, IConfiguration configuration)
     {
         var port = int.Parse(configuration["discovery:port"] ?? "8920");
         var endpoint = new IPEndPoint(IPAddress.Any, port);
 
-        _listener = new UdpClient(endpoint)
+        _udpListener = new UdpClient(endpoint)
         {
             MulticastLoopback = false
         };
@@ -27,19 +27,18 @@ public class DiscoveryService : BackgroundService
         _logger = logger;
         _configuration = configuration;
     }
-
-    public override Task StopAsync(CancellationToken cancellationToken)
+    
+    public override void Dispose()
     {
-        _listener.Dispose();
-        
-        return base.StopAsync(cancellationToken);
+        _udpListener?.Dispose();
+        base.Dispose();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await AcceptConnectionAsync(_listener, stoppingToken);
+            await AcceptConnectionAsync(_udpListener, stoppingToken);
         }
     }
 
@@ -55,7 +54,7 @@ public class DiscoveryService : BackgroundService
                     var text = Encoding.UTF8.GetString(result.Buffer);
                     if (text.Contains("aa832bc6", StringComparison.OrdinalIgnoreCase))
                     {
-                        await ResponseMessage(result.RemoteEndPoint, cancellationToken).ConfigureAwait(false);
+                        await ResponseMessageAsync(result.RemoteEndPoint, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (SocketException ex)
@@ -70,35 +69,46 @@ public class DiscoveryService : BackgroundService
         }
         catch (Exception ex)
         {
-            // Exception in this function will prevent the background service from restarting in-process.
-            //_logger.LogError(ex, "Unable to bind to {Address}:{Port}", .BeginReceive.Address, endpoint.Port);
+            if (_udpListener.Client.LocalEndPoint is IPEndPoint)
+            {
+                _logger.LogError(ex, $"Unable to bind to {_udpListener.Client.LocalEndPoint}");
+            };
         }
     }
-    private async Task ResponseMessage(IPEndPoint endpoint, CancellationToken cancellationToken)
-    {
-        using var udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
-                
-        var hostInterface = new HostInterface() 
-        {
-            Host = Dns.GetHostName(),
-            BoardType = GetEnvironmentVariable("BOARD") ?? "unknown",
-            AdaptorInterfaces = GetAvailableInterfaces()
-        };
 
-        if (hostInterface.AdaptorInterfaces.Count == 0)
-        {
-             _logger.LogWarning("Unable to respond to server discovery request because the local ip address could not be determined");
-            return;
-        }
-        
+    private async Task ResponseMessageAsync(IPEndPoint endpoint, CancellationToken cancellationToken)
+    {
         try
         {
+            var hostInterface = new HostInterface()
+            {
+                Host = Dns.GetHostName(),
+                BoardType = GetEnvironmentVariable("BOARD") ?? "unknown",
+                AdaptorInterfaces = GetAvailableInterfaces()
+            };
+
+            if (hostInterface.AdaptorInterfaces.Count == 0)
+            {
+                _logger.LogWarning("Unable to respond to server discovery request because the local ip address could not be determined");
+                return;
+            }
+
             var json = JsonSerializer.Serialize(hostInterface, JsonContext.Default.HostInterface);
-            await udpClient.SendAsync(Encoding.UTF8.GetBytes(json), endpoint, cancellationToken).ConfigureAwait(false);
-            
+            try
+            {
+                using (var udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, 0)))
+                {
+                    await udpClient.SendAsync(Encoding.UTF8.GetBytes(json), endpoint, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (SocketException ex)
+            {
+                _logger.LogError(ex, "Socket error sending response message");
+            }
+
             _logger.LogDebug("Sending discovery response");
         }
-        catch (SocketException ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending response message");
         }
@@ -113,13 +123,13 @@ public class DiscoveryService : BackgroundService
             if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Unknown) continue;
             if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
             if (networkInterface.OperationalStatus != OperationalStatus.Up) continue;
-            
+
             var v4Address = new List<string>();
             var v6Address = new List<string>();
 
             var ipProperties = networkInterface.GetIPProperties();
             foreach (UnicastIPAddressInformation unicast in ipProperties.UnicastAddresses)
-            {   
+            {
                 if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
                 {
                     v4Address.Add(unicast.Address.ToString());
@@ -129,7 +139,7 @@ public class DiscoveryService : BackgroundService
                     v6Address.Add(unicast.Address.ToString());
                 }
             }
-            
+
             var priorities = new string[] { "eth0", "eth1", "wlan0", "wlan0", "usb0", "usb1" };
 
             var deviceInterface = new AdaptorInterface()
@@ -157,7 +167,7 @@ public class DiscoveryService : BackgroundService
                 if (key.Equals(variable))
                 {
                     return entry.Value as string;
-                }     
+                }
             }
         }
 
