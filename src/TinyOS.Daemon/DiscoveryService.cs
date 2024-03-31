@@ -38,11 +38,11 @@ public class DiscoveryService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await AcceptConnectionAsync(_udpListener, stoppingToken);
+            await AcceptConnectionAsync(stoppingToken);
         }
     }
 
-    private async Task AcceptConnectionAsync(UdpClient _listener, CancellationToken cancellationToken)
+    private async Task AcceptConnectionAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -50,7 +50,7 @@ public class DiscoveryService : BackgroundService
             {
                 try
                 {
-                    var result = await _listener.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                    var result = await _udpListener.ReceiveAsync(cancellationToken).ConfigureAwait(false);
                     var text = Encoding.UTF8.GetString(result.Buffer);
                     if (text.Contains("aa832bc6", StringComparison.OrdinalIgnoreCase))
                     {
@@ -101,9 +101,9 @@ public class DiscoveryService : BackgroundService
                     await udpClient.SendAsync(Encoding.UTF8.GetBytes(json), endpoint, cancellationToken).ConfigureAwait(false);
                 }
             }
-            catch (SocketException ex)
+            catch (SocketException se)
             {
-                _logger.LogError(ex, "Socket error sending response message");
+                _logger.LogError(se, "Socket error sending response message");
             }
 
             _logger.LogDebug("Sending discovery response");
@@ -156,7 +156,7 @@ public class DiscoveryService : BackgroundService
         return interfaces;
     }
 
-    public static string? GetEnvironmentVariable(string variable)
+    private static string? GetEnvironmentVariable(string variable)
     {
         foreach (var item in Environment.GetEnvironmentVariables())
         {
