@@ -2,11 +2,9 @@ using System;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Collections;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
-using System.Collections;
-using System.Security;
-using System.Reflection.Metadata.Ecma335;
 
 namespace TinyOS.Daemon;
 
@@ -14,28 +12,38 @@ public class DiscoveryService : BackgroundService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<DiscoveryService> _logger;
+    private readonly UdpClient _listener;
 
     public DiscoveryService(ILogger<DiscoveryService> logger, IConfiguration configuration)
     {
+        var port = int.Parse(configuration["discovery:port"] ?? "8920");
+        var endpoint = new IPEndPoint(IPAddress.Any, port);
+
+        _listener = new UdpClient(endpoint)
+        {
+            MulticastLoopback = false
+        };
+
         _logger = logger;
         _configuration = configuration;
     }
 
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        _listener.Dispose();
+        
+        return base.StopAsync(cancellationToken);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var port = int.Parse(_configuration["discovery:port"] ?? "8920");
-        var endpoint = new IPEndPoint(IPAddress.Any, port);
-        
-        using var udpClient = new UdpClient(endpoint);
-        udpClient.MulticastLoopback = false;
-
         while (!stoppingToken.IsCancellationRequested)
         {
-            await AcceptConnectionAsync(udpClient, stoppingToken);
+            await AcceptConnectionAsync(_listener, stoppingToken);
         }
     }
 
-    private async Task AcceptConnectionAsync(UdpClient udpClient, CancellationToken cancellationToken)
+    private async Task AcceptConnectionAsync(UdpClient _listener, CancellationToken cancellationToken)
     {
         try
         {
@@ -43,7 +51,7 @@ public class DiscoveryService : BackgroundService
             {
                 try
                 {
-                    var result = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                    var result = await _listener.ReceiveAsync(cancellationToken).ConfigureAwait(false);
                     var text = Encoding.UTF8.GetString(result.Buffer);
                     if (text.Contains("aa832bc6", StringComparison.OrdinalIgnoreCase))
                     {
@@ -63,7 +71,7 @@ public class DiscoveryService : BackgroundService
         catch (Exception ex)
         {
             // Exception in this function will prevent the background service from restarting in-process.
-            //_logger.LogError(ex, "Unable to bind to {Address}:{Port}", udpClient.BeginReceive.Address, endpoint.Port);
+            //_logger.LogError(ex, "Unable to bind to {Address}:{Port}", .BeginReceive.Address, endpoint.Port);
         }
     }
     private async Task ResponseMessage(IPEndPoint endpoint, CancellationToken cancellationToken)
@@ -122,14 +130,14 @@ public class DiscoveryService : BackgroundService
                 }
             }
             
-            var names = new string[] { "eth0", "eth1", "wlan0", "wlan0", "usb0", "usb1" };
+            var priorities = new string[] { "eth0", "eth1", "wlan0", "wlan0", "usb0", "usb1" };
 
             var deviceInterface = new AdaptorInterface()
             {
                 Name = networkInterface.Name,
                 IPv4Address = v4Address,
                 IPv6Address = v6Address,
-                Priority = Array.IndexOf(names, networkInterface.Name)
+                Priority = Array.IndexOf(priorities, networkInterface.Name)
             };
 
             interfaces.Add(deviceInterface);
