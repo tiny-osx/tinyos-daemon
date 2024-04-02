@@ -6,26 +6,27 @@ using System.Collections;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
 
+using TinyOS.Build.Serialization;
+
 namespace TinyOS.Daemon;
 
 public class DiscoveryService : BackgroundService
 {
     private readonly UdpClient _udpListener;
-    private readonly IConfiguration _configuration;
+    private readonly int _port;
     private readonly ILogger<DiscoveryService> _logger;
 
     public DiscoveryService(ILogger<DiscoveryService> logger, IConfiguration configuration)
     {
-        var port = int.Parse(configuration["discovery:port"] ?? "8920");
-        var endpoint = new IPEndPoint(IPAddress.Any, port);
+        _port = int.Parse(configuration["discovery:port"] ?? "8920");
 
+        var endpoint = new IPEndPoint(IPAddress.Any, _port);
         _udpListener = new UdpClient(endpoint)
         {
             MulticastLoopback = false
         };
 
         _logger = logger;
-        _configuration = configuration;
     }
     
     public override void Dispose()
@@ -83,6 +84,7 @@ public class DiscoveryService : BackgroundService
             var hostInterface = new HostInterface()
             {
                 Host = Dns.GetHostName(),
+                Port = _port,
                 BoardType = GetEnvironmentVariable("BOARD") ?? "unknown",
                 AdaptorInterfaces = GetAvailableInterfaces()
             };
@@ -93,7 +95,7 @@ public class DiscoveryService : BackgroundService
                 return;
             }
 
-            var json = JsonSerializer.Serialize(hostInterface, JsonContext.Default.HostInterface);
+            var json = JsonSerializer.Serialize(hostInterface, InterfaceContext.Default.HostInterface);
             try
             {
                 using (var udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, 0)))

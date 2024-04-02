@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyOS.Daemon", "TinyOS.Daemon\TinyOS.Daemon.csproj", "{F2B73BC2-F374-4643-9555-E404E9E6C717}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyOS.Build", "TinyOS.Build\TinyOS.Build.csproj", "{8701ECF9-F260-45D2-858E-0C27C079952F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{F2B73BC2-F374-4643-9555-E404E9E6C717}.Release|arm64.Build.0 = Release|Any CPU
 		{F2B73BC2-F374-4643-9555-E404E9E6C717}.Release|x86.ActiveCfg = Release|Any CPU
 		{F2B73BC2-F374-4643-9555-E404E9E6C717}.Release|x86.Build.0 = Release|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Debug|arm64.Build.0 = Debug|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Debug|x86.Build.0 = Debug|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Release|arm64.ActiveCfg = Release|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Release|arm64.Build.0 = Release|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Release|x86.ActiveCfg = Release|Any CPU
+		{8701ECF9-F260-45D2-858E-0C27C079952F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,79 @@
+name: Actions CI
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - '**'
+      - '!.editorconfig'
+      - '!.gitattributes'
+      - '!.gitignore'
+      - '!*.md'
+
+  workflow_dispatch:
+
+env:
+  VERBOSITY: 'Minimal'
+  CONFIGURATION: 'Debug'
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
+
+jobs: 
+  Build:
+    name: Build on .NET Core ${{ matrix.dotnet }}    
+    runs-on: [ubuntu-latest]
+    strategy:
+      matrix:
+        dotnet: ['8.0.204']
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Extract build and copyright information into variables
+      id: info
+      run: |
+        echo "BUILD=$(date +'%Y%m%d')-${{ github.run_number }}" >> $GITHUB_ENV
+        echo "COPYRIGHT=$(echo © $(date -u +%Y) Bytewizer.  All rights reserved.)" >> $GITHUB_ENV
+        
+    - name: Show build information
+      run: |
+        echo BUILD=${{ env.BUILD }}
+        echo COPYRIGHT=${{ env.COPYRIGHT }}
+     
+    - name: Echo default env variables
+      run: |
+          echo "Home: ${HOME}"
+          echo "GITHUB_WORKFLOW: ${GITHUB_WORKFLOW}"
+          echo "GITHUB_ACTIONS: ${GITHUB_ACTIONS}"
+          echo "GITHUB_ACTOR: ${GITHUB_ACTOR}"
+          echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
+          echo "GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}"
+          echo "GITHUB_WORKSPACE: ${GITHUB_WORKSPACE}"
+          echo "GITHUB_SHA: ${GITHUB_SHA}"
+          echo "GITHUB_REF: ${GITHUB_REF}"    
+
+    - name: Show .NET Core information
+      run: dotnet --info
+            
+    - name: Build and pack client build libraries project
+      working-directory: src/  
+      run: >- 
+        dotnet pack ./TinyOS.Build.sln -p:BuildNumber="${{ env.BUILD }}" -p:Copyright="${{ env.COPYRIGHT }}"
+        --version-suffix preview.${{ env.BUILD }}
+        --verbosity ${{ env.VERBOSITY }}
+        --configuration ${{ env.CONFIGURATION }}
+        --output ./builds/artifacts
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: preview.${{ env.BUILD }}
+        path: "./src/builds/artifacts/**/*.nupkg"
+        if-no-files-found: error
+    
+    - name: Publish package to test nuget.org
+      run: |
+        nuget sources add -name nugettest.org -source "https://apidev.nugettest.org/v3/index.json" -username ${{ github.actor }} -password ${{secrets.NUGET_BUILD_API_KEY}}
+        nuget push ./src/builds/artifacts/**/*.nupkg -source nugettest.org -apikey ${{secrets.NUGET_BUILD_API_KEY}} -skipduplicate

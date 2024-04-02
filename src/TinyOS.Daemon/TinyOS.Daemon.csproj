@@ -17,6 +17,10 @@
   <ItemGroup>
       <Content Update="appsettings*.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TinyOS.Build\TinyOS.Build.csproj" />
+  </ItemGroup>
     
 </Project>
 
