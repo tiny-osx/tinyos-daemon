@@ -12,13 +12,13 @@ namespace TinyOS.Daemon;
 
 public class DiscoveryService : BackgroundService
 {
-    private readonly UdpClient _udpListener;
     private readonly int _port;
+    private readonly UdpClient _udpListener;
     private readonly ILogger<DiscoveryService> _logger;
 
     public DiscoveryService(ILogger<DiscoveryService> logger, IConfiguration configuration)
     {
-        _port = int.Parse(configuration["discovery:port"] ?? "8920");
+        _port = int.Parse(configuration["debugger:port"] ?? "8920");
 
         var endpoint = new IPEndPoint(IPAddress.Any, _port);
         _udpListener = new UdpClient(endpoint)

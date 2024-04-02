@@ -1,4 +1,4 @@
-   namespace TinyOS.Build.Serialization
+namespace TinyOS.Build.Serialization
 {
     public class AdaptorInterface()
     {

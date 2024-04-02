@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+
 using TinyOS.Daemon.Endpoints;
 
 namespace TinyOS.Daemon;
@@ -15,7 +16,8 @@ internal class Program
                 ContentRootPath = "/apps/",
             });
 
-        builder.WebHost.UseUrls("http://*:8920");
+        var port = int.Parse(builder.Configuration["debugger:port"] ?? "8920");
+        builder.WebHost.UseUrls($"http://*:{port}");
 
         builder.Services.ConfigureHttpJsonOptions(options =>
         {

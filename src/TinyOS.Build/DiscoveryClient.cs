@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Net;
+using System.Net.Sockets;
 
 using TinyOS.Build.Serialization;
 
@@ -32,15 +31,7 @@ namespace TinyOS.Build
 
             _udpClient.Client.ReceiveTimeout = ReceiveTimeout;
 
-            AdaptorInterfaces = new List<AdaptorInterface>()
-            { new AdaptorInterface()
-                {
-                    Name = "unknown",
-                    IPv4Address =  new List<string>() { "192.168.7.1" },
-                    IPv6Address =  new List<string>() { "::" },
-                    Priority = 0
-                }
-            };
+            AdaptorInterfaces = new List<AdaptorInterface>();
 
             var task = Task.Run(() =>
             {
@@ -51,8 +42,8 @@ namespace TinyOS.Build
 
                     if (hostInterface != null)
                     {
-                        Host = hostInterface.Host ?? "unknown";
-                        BoardType = hostInterface.BoardType ?? "unknown";
+                        Host = hostInterface.Host;
+                        BoardType = hostInterface.BoardType;
                         AdaptorInterfaces = hostInterface.AdaptorInterfaces ?? new List<AdaptorInterface>();
                     }
                 }
@@ -65,6 +56,11 @@ namespace TinyOS.Build
             SendToken(port);
 
             task.Wait();
+        }
+        
+        public void Dispose()
+        {
+            _udpClient?.Dispose();
         }
 
         private void SendToken(int port)
@@ -79,11 +75,6 @@ namespace TinyOS.Build
             {
                 return;
             }
-        }
-
-        public void Dispose()
-        {
-            _udpClient?.Dispose();
         }
 
        public static string GetIPv4Address()
@@ -102,6 +93,5 @@ namespace TinyOS.Build
 
             return address;
         }
-        
     }
 }
