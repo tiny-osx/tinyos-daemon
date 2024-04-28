@@ -1,0 +1,20 @@
+<Project>
+	
+	<PropertyGroup>
+		<Authors>Bytewizer</Authors>
+		<Company>Bytewizer Technology</Company>
+		<PackageIcon>package-logo.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<Copyright>Bytewizer Technology. All rights reserved.</Copyright>
+		<PackageProjectUrl>https://github.com/tiny-osx/tinyos-deamon</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/tiny-osx</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../../README.md" Pack="true" PackagePath="\"/>
+		<None Include="../../LICENSE.md" Pack="true" PackagePath="\" />
+		<None Include="../../assets/package-logo.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
+	
+</Project>
