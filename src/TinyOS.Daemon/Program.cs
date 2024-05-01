@@ -11,9 +11,11 @@ internal class Program
             new WebApplicationOptions() 
             {
                 Args = args, 
-                //ContentRootPath = "/apps/"
+                ContentRootPath = "/apps/",
             });
-            
+
+        builder.WebHost.UseUrls("http://*:8920");
+
         builder.Services.ConfigureHttpJsonOptions(options =>
         {
             options.SerializerOptions.TypeInfoResolverChain.Insert(0, EndpointsJsonContext.Default);

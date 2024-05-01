@@ -24,6 +24,7 @@ public class DebuggerService
             StartInfo = new ProcessStartInfo
             {
                 FileName = _configuration["debugger:filename"] ?? "/usr/share/vsdbg/vsdbg",
+                WorkingDirectory = "/apps/313aee0b-57b3-466a-2d5a-f52b63bd654b",
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardInput = true,
@@ -39,13 +40,11 @@ public class DebuggerService
 
         if (args.Count() == 0)
         {
-            //_process.StartInfo.Arguments = _configuration["debugger:arguments"] ?? "--interpreter=vscode";
-            _process.StartInfo.Arguments = "--interpreter=vscode";
+            _process.StartInfo.Arguments = _configuration["debugger:arguments"] ?? "--interpreter=vscode";
         }
         else
         {
-            //_process.StartInfo.Arguments = ConcatArgs(args);
-             _process.StartInfo.Arguments = "--interpreter=vscode";
+            _process.StartInfo.Arguments = ConcatArgs(args);
         }
 
         _listener.Start();
@@ -109,11 +108,16 @@ public class DebuggerService
     {
         var arg = string.Empty;
         if (args != null) {
-            foreach (var r in args) {
-                if (arg.Length > 0) {
-                    arg += " ";
+            foreach (var r in args) 
+            {
+                if (arg.StartsWith("--"))
+                {
+                    if (arg.Length > 0) 
+                    {
+                        arg += " ";
+                    }
+                    arg += quote ? Quote (r) : r;
                 }
-                arg += quote ? Quote (r) : r;
             }
         }
         return arg;
