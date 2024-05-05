@@ -8,7 +8,7 @@
     <SelfContained>true</SelfContained>
     <PublishTrimmed>true</PublishTrimmed>
     <PublishReadyToRun>true</PublishReadyToRun>
-    <Assembly>tinyosd</Assembly>
+    <AssemblyName>tinyosd</AssemblyName>
 
     <!-- <DebugType>None</DebugType>
     <DebugSymbols>False</DebugSymbols> -->
