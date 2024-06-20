@@ -13,7 +13,7 @@ internal class Program
             new WebApplicationOptions() 
             {
                 Args = args, 
-                ContentRootPath = "/apps/",
+                ContentRootPath = "/data/",
             });
 
         var port = int.Parse(builder.Configuration["debugger:port"] ?? "8920");
